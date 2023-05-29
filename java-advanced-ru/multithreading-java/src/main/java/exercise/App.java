@@ -30,7 +30,7 @@ class App {
             max = threadMaxSearch.getResult();
             min = threadMinSearch.getResult();
         }
-        return Map.of("min", min, "max", max);
+        return Map.of("max", max, "min", min);
     }
     // END
 }

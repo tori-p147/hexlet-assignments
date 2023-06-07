@@ -12,6 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -131,21 +133,27 @@ public class AppTest {
         update.setFirstName("test");
         update.setLastName("test");
         update.setEmail("test");
-        mockMvc
-                .perform(patch("/people/{id}", 3)
+        var existingUserEmail = "jack@mail.com";
+        // Используем утилиту для получения идентификатора пользователя по его email
+        // Так как мы не знаем заранее, с каким идентификатором сущность создастся в базе данных
+        var existingUserId = TestUtils.getUserIdByEmail(mockMvc, existingUserEmail);
+        MvcResult mvcResult = mockMvc.perform(patch("/people/{id}", existingUserId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(update)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk()).andReturn();
 
+        assertThat(mvcResult.getResponse().getStatus()).isEqualTo(200);
         // Проверяем, что тело ответа содержит пользователей
         assertNotNull(repository.findByEmail(update.getEmail()));
     }
 
     @Test
     void testDeletePerson() throws Exception {
-        mockMvc.perform(delete("/people/{id}", 1))
-                .andExpect(status().isOk());
+        MvcResult mvcResult = mockMvc.perform(delete("/people/{id}", 1))
+                .andExpect(status().isOk())
+                .andReturn();
 
+        assertThat(mvcResult.getResponse().getStatus()).isEqualTo(200);
         // Проверяем, что тело ответа содержит пользователей
         assertNull(repository.findById(1));
     }
